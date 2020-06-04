@@ -76,5 +76,8 @@ const page = () => {
 const compile = parallel(style, script, page)
 
 module.exports = {
+  style,
+  script,
+  page,
   compile 
 }

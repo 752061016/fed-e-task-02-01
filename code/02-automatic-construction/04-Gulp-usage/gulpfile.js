@@ -34,6 +34,6 @@ const rename = require('gulp-rename')
 exports.gulp_api = () => {
     return src('src/*.css')
         .pipe(cleanCss())
-        .pipe(rename({extname: 'min.css'}))
+        .pipe(rename({extname: '.min.css'}))
         .pipe(dest('dist'))
 }
