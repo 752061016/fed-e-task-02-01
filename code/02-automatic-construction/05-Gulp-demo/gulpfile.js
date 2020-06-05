@@ -1,10 +1,18 @@
-const {src, dest, parallel} = require('gulp')
+const {src, dest, parallel, series} = require('gulp')
+// 删除文件插件
+const del = require('del')
 // 处理sass文件，转换成css文件
 const sass = require('gulp-sass')
 // 处理js文件，转换es6语法，还需安装 @babel/core 和 @babel/preset-env
 const babel = require('gulp-babel')
 // 转换 swig 的模板文件
 const swig = require('gulp-swig')
+// 转换图片
+const imagemin = require('gulp-imagemin')
+
+// 自动载入插件
+const loadPlugins = require('gulp-load-plugins')
+const plugins = loadPlugins()
 
 // 样式编译 gulp-sass
 const style = () => {
@@ -72,12 +80,43 @@ const page = () => {
     .pipe(dest('dist'))
 }
 
+// 图片文件压缩转换
+const image = () => {
+  return src('src/assets/images/**', {base: 'src'})
+    .pipe(imagemin())
+    .pipe(dest('dist'))
+}
+
+// 字体文件压缩转换
+const font = () => {
+  return src('src/assets/fonts/**', {base: 'src'})
+    .pipe(imagemin())
+    .pipe(dest('dist'))
+}
+
+// 不需要转换的文件
+const extra = () => {
+  return src('public/**', {base: 'public'})
+    .pipe(dest('dist'))
+}
+
+// 清除文件
+const clean = () => {
+  return del(['dist'])
+}
+
 // 创建组合任务
-const compile = parallel(style, script, page)
+const compile = parallel(style, script, page, image, font)
+
+const build = series(clean, parallel(extra, compile)) 
 
 module.exports = {
   style,
   script,
   page,
-  compile 
+  image,
+  font,
+  extra,
+  compile,
+  build
 }

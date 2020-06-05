@@ -212,6 +212,108 @@ exports.gulp_api = () => {
   + pubilc 不需要被加工，直接拷贝的文件
   + src 开发代码，所有文件都会被转换
 + 安装 gulp 依赖模块
-#########
++ 使用 gulp 模块自带的 src, dest 工作流操作文件, parallel 创建组合任务
+```javascript
+const {src, dest, parallel} = require('gulp')
+```
++ 样式编译：安装 gulp-sass 依赖模块操作文件转换成 css 文件(自动安装sass)
+```javascript
+// 处理sass文件，转换成css文件
+const sass = require('gulp-sass')
+
+// 样式编译 gulp-sass
+const style = () => {
+  // 文件名不能以 _ 开头，会被认为是依赖文件而不转换
+  return src('src/assets/styles/*.scss',{base: 'src'})
+    // outputStyle:'expanded' 生成完全展开的代码
+    .pipe(sass({ outputStyle:'expanded'}))
+    .pipe(dest('dist'))
+}
+```
++ js编译：安装 @babel/core 和 @babel/preset-env 模块转换js新特性
+```javascript
+// 处理js文件，转换es6语法，还需安装 @babel/core 和 @babel/preset-env
+const babel = require('gulp-babel')
+
+// 脚本编译 gulp-babel
+const script = () => {
+  return src('src/assets/scripts/*.js',{base: 'src'})
+    // presets: ['@babel/preset-env'] 将js新特性转换
+    // 只会转换 @babel/preset-env 的特性
+    .pipe(babel({ presets: ['@babel/preset-env']}))
+    .pipe(dest('dist'))
+}
+```
++ 模板编译:模板使用 swig 模板文件，安装 swig 依赖用以转换模板
+```javascript
+// 转换 swig 的模板文件
+const swig = require('gulp-swig')
+
+// 模板配置选项
+const data = {...}
+
+// 模板编译
+const page = () => {
+  return src('src/*.html', {base: 'src'})
+    // data 插入模板的配置选项
+    .pipe(swig({data}))
+    .pipe(dest('dist'))
+}
+```
++ 图片和字体文件转换
++ 安装 gulp-imagemin 转换图片
+```javascript
+// 转换图片
+const imagemin = require('gulp-imagemin')
+
+// 图片文件压缩转换
+const image = () => {
+  return src('src/assets/images/**', {base: 'src'})
+    .pipe(imagemin())
+    .pipe(dest('dist'))
+}
+```
++ 字体文件也能使用图片的形式进行压缩转换
+```javascript
+// 字体文件压缩转换
+const font = () => {
+  return src('src/assets/fonts/**', {base: 'src'})
+    .pipe(imagemin())
+    .pipe(dest('dist'))
+}
+```
++ 其他不需要转换的文件直接复制
+```javascript
+// 不需要转换的文件
+const extra = () => {
+  return src('public/**', {base: 'public'})
+    .pipe(dest('dist'))
+}
+```
++ 清除文件：安装 del 依赖插件，不是 gulp 插件但能中 gulp 中使用
+```javascript
+// 删除文件插件
+const del = require('del')
+
+// 清除文件  删除所有dist文件夹下的文件
+const clean = () => {
+  return del(['dist'])
+}
+
+// 因为后续操作需在删除完成后才能继续，需要使用 series 方法组合任务
+const build = series(clean, parallel(extra, compile)) 
+```
+### Gulp 自动加载插件
+##### gulp-load-plugins 插件能解决插件载入的问题
+```javascript
+// 自动载入插件
+const loadPlugins = require('gulp-load-plugins')
+const plugins = loadPlugins()
+
+// 所有已安装的 gulp-<name> 依赖都可使用 plugins.<name> 来执行
+// 如： plugins.sass 等同于 require('gulp-sass')
+```
+
+
 
 
