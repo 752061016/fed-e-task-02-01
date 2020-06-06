@@ -313,7 +313,93 @@ const plugins = loadPlugins()
 // 所有已安装的 gulp-<name> 依赖都可使用 plugins.<name> 来执行
 // 如： plugins.sass 等同于 require('gulp-sass')
 ```
+### Gulp 热更新开发服务器
+##### 在代码修改后自动编译文件且修改页面，提高开发效率
++ 安装 browser-sync 依赖模块，能提高开发服务器，支持代码更新后自动热更新看到最新的页面效果
++ 在文件中引入 browser-sync 模块，再创建任务使用
+```javascript
+// 热更新插件
+const browserSync = require('browser-sync')
+// 自动创建开发服务器
+const bs = browserSync.create()
 
+// 创建 serve 任务，以 dist 文件夹为热更新目录
+const serve = () => {
+  bs.init({
+    // 弹出提示是否连接完毕
+    notify: false,
+    // 默认端口
+    port: 2020,
+    // 监听文件的修改自动热更新， dist下所有文件被修改会自动更新
+    files: 'dist/**',
+    // 是否自动打开网页
+    open: false,
+    server: {
+      baseDir: 'dist',
+      // 将所有对键的请求路径都改为值的路径
+      routes: {
+        '/node_modules': 'node_modules'
+      }
+    }
+  })
+}
+```
+### 监视变化以及构建化
++ gulp 提供了一个 watch 的API，能监听所有符合通配符的文件修改
++ 监听所选文件的修改，一旦被修改则执行对应的命令就会将新文件覆盖旧文件
++ 这里可能会因为 swig 模板引擎缓存机制导致页面不变化，需要将 swig 选项中的 cache 设置为false
++ 但一般在开发阶段，对静态文件的监听会导致页面加载变慢，所以一般会在开启服务器监听时为其设置 baseDir 数组路径，若在当前路径找不到文件会向后查找
++ 若还是想监听静态文件的变化，可以监听文件变化时让浏览器重新请求而不需要重新编译文件
+```javascript
+const {watch} = require('gulp')
 
+// watch 方法接收两个参数 监听的路径和执行的命令
+watch('src/assets/styles/*.scss', style)
+watch('src/assets/scripts/*.js', script)
+watch('src/*.html', page)
+// ================================
+// watch('src/assets/images/**', image)
+// watch('src/assets/fonts/**', font)
+// watch('public/**', extra)
+watch([
+  'src/assets/images/**',
+  'src/assets/fonts/**',
+  'public/**'
+], bs.reload) // bs.reload 浏览器重新发起请求
 
+const develop = series(compile, serve)
+```
++ 也可以在每个文件的任务结尾加上 bs.reload() 方法，这样不用在 serve 任务中再监听 dist 文件夹的修改，因为 watch 监听任务时每次都会执行 bs.reload() 推送到浏览器
+```javascript
+.pipe(bs.reload({stream: true}))
+```
++ 总结
+  + 使用 borwser-sync 提供的服务器启动服务
+  + 使用 gulp 提供的 watch API监听文件路径的通配符，在修改时执行对应的任务
+  + 分配哪些需要在开发阶段实行的任务(html、css、js文件)和开发阶段不需要实行的任务(图片)，减少不必要的构建次数，提高效率
 
+### Gulp useref 文件引用处理
+##### 上述的 /node_modules 的路径会被转换，开发阶段不出问题是对路由做映射，但上线后是不会找到对应的替换后的路径
++ useref 插件：能将 build 注释内的文件压缩打包到一个新的路径
+```javascript
+// 打包前
+<!-- build:css assets/styles/vendor.css -->
+<link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.css">
+<!-- endbuild -->
+<!-- build:css assets/styles/main.css -->
+<link rel="stylesheet" href="assets/styles/main.css">
+<!-- endbuild -->
+```
+```javascript
+// 引用依赖
+const useref = () => {
+  return src('dist/*.html', {base: 'dist'})
+    .pipe(plugins.useref({searchPath: ['dist', '.']}))
+    .pipe(dest('dist'))
+}
+```
+```javascript
+// 打包后
+<link rel="stylesheet" href="assets/styles/vendor.css">
+<link rel="stylesheet" href="assets/styles/main.css">
+```
