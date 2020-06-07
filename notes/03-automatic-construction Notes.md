@@ -403,3 +403,138 @@ const useref = () => {
 <link rel="stylesheet" href="assets/styles/vendor.css">
 <link rel="stylesheet" href="assets/styles/main.css">
 ```
+### Gulp 文件压缩 
++ 分别对于 HTML css js 文件进行不同操作压缩
++ 安装 gulp-htmlmin、gulp-clean-css、gulp-uglify 压缩 html、css、js文件
++ 安装 gulp-if 依赖对文件的类型进行判断后进行对应的处理
+```javascript
+const useref = () => {
+  return src('dist/*.html', {base: 'dist'})
+    .pipe(plugins.useref({searchPath: ['dist', '.']}))
+    // 压缩 html css js
+    .pipe(plugins.if(/\.js$/, plugins.uglify()))
+    .pipe(plugins.if(/\.css$/, plugins.cleanCss()))
+    // collapseWhitespace 是否对空白和换行折叠
+    // minifyCSS 压缩行内css代码
+    // minifyJS 压缩行内js代码
+    .pipe(plugins.if(/\.html$/, plugins.htmlmin({
+      collapseWhitespace: true,
+      minifyCSS: true,
+      minifyJS: true
+    })))
+    .pipe(dest('dist'))
+}
+```
+### Gulp 重新规划构建过程
++ 因为构建后的压缩文件目录被破坏，导致所需的文件不在同一个文件夹下
++ 可以将所有的文件在构建后存入 temp 临时文件夹中，再在 useref 对文件进行压缩后再存入 dist 文件夹中
++ 查最新代码
+### Gulp 补充
++ clean 需要导出让使用者删除文件夹中的内容
++ style,script,page,image,font,extra,useref 不需要导出
++ compile build devolop 三个组合任务需要导出使用
++ 可以加入 package.json 中的 scripts 操作指令
+```javascript
+"scripts": {
+    "clean": "gulp clean",
+    "build": "gulp build",
+    "develop": "gulp develop"
+}
+```
+### Gulp 封装自动化构建工作流
++ 安装 node 模块 npm i zce-cli -g
++ 创建 node 模块文件 zce init nm 06-Gulp-cli
++ 将写好的 gulpfile.js 文件写入创建好的 node 模块文件cli的 index.js
++ 将原先项目的 dependencies 依赖全添加到cli中，并安装
++ 创建 07-Glup-cli-demo，创建新的gulpfile.js
++ 将 06 yarn link 到全局中
++ 在 07 中 yarn link "06-glup-cli" 安装到文件夹中，07 的 node_modules 中会有文件指向 06
++ 在07 的 gulpfile.js 文件中导入 06 的依赖, 并安装需要的依赖 yarn
++ 07 还需要安装 gulp 和 gulp-cli 依赖
++ 在 06 项目的 index 中配置了 data 选项，应该将 data 抽出
++ 在 07 中创建 pages.config.js 放置 data 的文件
++ 在 06 中对 07 的 pages.config.js 文件进行获取处理
+```javascript
+// 返回命令行的工作目录
+const cwd = process.cwd()
+let config = {}
+try {
+  loadConfig = require(`${cwd}/pages.config.js`)
+  config = Object.assign({}, config, loadConfig)
+} catch (error) {
+  
+}
+```
++ @babel/preset-env 依赖找不到，将 @babel/preset-env 字符串替换成找到的依赖文件 require('@babel/preset-env') ,会依次往上找
++ 使用 yarn build 可以直接生成文件
+### 抽象路径配置
++ 定义一个 config 配置路径选项
+```javascript
+let config = {
+  build: {
+    src: 'src',
+    dist: 'dist',
+    temp: 'temp',
+    public: 'public',
+    paths: {
+      styles: 'assets/styles/*.scss',
+      scripts: 'assets/scripts/*.js',
+      pages: '*.html',
+      images: 'assets/images/**',
+      fonts: 'assets/fonts/**'
+    }
+  }
+}
+```
++ 将所有的路径选项替换成配置选项， cwd: 从哪个路径开始查找
+### Gulp 包装cli
++ 没有 gulpfile.js 文件也能正常运行
+```javascript
+// 指定 gulpfile.js 的文件路径 和 文件的指定路径
+yarn gulp --gulpfile ./node_modules/06-Gulp-cli/lib/index.js --cwd .
+```
++ 也能新建 cli 指令
++ 06 创建 bin/zxd-cli.js 文件,文件开头：#!/usr/bin/env node
++ 在 package.json 中添加 bin 字段的指令,重新 yarn link
++ 在 07 命令行使用 zxd-cli 就能执行
+```javascript
+// process.argv 获得路径和参数的数据
+process.argv.push('--cwd')
+process.argv.push(process.cwd())
+process.argv.push('--gulpfile')
+process.argv.push(require.resolve('..'))
+// 自动执行 gulp 命令
+require('gulp/bin/gulp')
+```
+### 发布并使用模块
++ 发布前需要在files里加入bin文件夹
++ yarn publish 发布
++ yarn publish --registry https://registry.yarnpkg.com
++ 安装对应的依赖并使用
+### 总结
++ 安装模块，执行的是 node_modules 下对应模块的 bin 下的文件
++ 为其指定 gulpfile.js 的文件路径 和 文件的指定路径，会找到 package.json 下的 main 字段，找到对应的文件
++ 找到 pages.config.js 文件，载入配置选项，完成对应的工作流
++ 参考模块：github.com/zce/x-pages
+## FIS
+##### FIS 基本使用
++ 安装FIS：npm i fis3 -g
++ 在文件夹下使用：fis3 release -d output,会将所有文件重新生成到output文件夹中
++ 创建fis.conf.js文件，使符合条件的文件打包到对应文件夹中
++ 安装 fis-parser-node-sass 依赖来转换sass文件
+```javascript
+// 转换sass文件
+fis.match('**/*.scss', {
+    rExt: 'css', // 修改后缀名
+    parser: fis.plugin('node-sass'),
+    optimizer: fis.plugin('clean-css') // 压缩css文件
+})
+```
++ 安装 fis-parser-babel-6.x 依赖来转换js文件
+```javascript
+// 转换js文件
+fis.match('**/*.js', {
+    parser: fis.plugin('babel-6.x'),
+    optimizer: fis.plugin('ugliffy-js') // 压缩js文件
+})
+```
