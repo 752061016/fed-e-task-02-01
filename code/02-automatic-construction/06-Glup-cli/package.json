@@ -13,7 +13,8 @@
   "license": "MIT",
   "author": "Admin <752061016@qq.com>",
   "files": [
-    "lib","bin"
+    "lib",
+    "bin"
   ],
   "main": "lib/index.js",
   "bin": "bin/zxd-page.js",

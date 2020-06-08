@@ -37,7 +37,7 @@ let config = {
   }
 }
 try {
-  loadConfig = require(`${cwd}/pages.config.js`)
+  const loadConfig = require(`${cwd}/pages.config.js`)
   config = Object.assign({}, config, loadConfig)
 } catch (error) {
   

@@ -119,7 +119,7 @@ module.exports = grunt => {
     // babel
     // grunt.loadNpmTasks('grunt-sass')
 
-    loadGruntTasks(grunt) // 自动加载所以的 grout 插件
+    loadGruntTasks(grunt) // 自动加载所有的 grout 插件
 
     // 定义一个指令在watch前先执行 sass 和 babel
     grunt.registerTask('start', ['sass', 'babel', 'watch'])

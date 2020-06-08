@@ -77,7 +77,7 @@
 
 + 模块名称必须由generator-<name>的格式
 1. 创建名为generator-<name>的文件夹
-2. 命令行添加yeoman-generator： npm add teoman-generator
+2. 命令行添加yeoman-generator： npm add yeoman-generator
 3. 创建默认生成器目录 generator-<name>/generators/app/index.js
 4. 在index.js中实现
 5. 通过npm link 将生成器文件添加到全局
