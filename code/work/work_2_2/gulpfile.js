@@ -71,7 +71,7 @@ const script = () => {
 // 使用gulp-swig插件编辑html文件 plugins.swig使用gulp-swig
 const page = () => {
     // src 创建文件写入流,接受文件路径,第二个配置为配置选项为对象，base：配置相同的路径,cwd：从哪个文件夹开始查找
-    return src(config.build.paths.pages, {base: config.build.src, cwd: config.build.src})
+    return src(`**/${config.build.paths.pages}`, {base: config.build.src, cwd: config.build.src})
         // data 插入模板的配置选项,使用pages.config.js导出的data
         // cacha:false 防止模板引擎缓存机制导致页面不变化
         .pipe(plugins.swig({data:config.data, defaults:{cache:false}}))
@@ -130,7 +130,7 @@ const serve = () => {
         // 弹出提示是否连接完毕
         notify: false,
         // 默认端口
-        port: 8080,
+        port: 2080,
         // 监听文件的修改自动热更新， dist下所有文件被修改会自动更新
         files: `${config.build.dist}/**`,
         // 是否自动打开网页
@@ -150,7 +150,7 @@ const serve = () => {
 // 引用依赖,对html文件内的依赖进行处理压缩
 const useref = () => {
     // 对 temp 临时文件夹下的 html 进行压缩
-    return src(config.build.paths.pages, {base: config.build.temp ,cwd: config.build.temp})
+    return src(`**/${config.build.paths.pages}`, {base: config.build.temp ,cwd: config.build.temp})
         .pipe(plugins.useref({searchPath: [config.build.temp, '.']}))
         // 压缩依赖中的 html css js 文件
         .pipe(plugins.if(/\.js$/, plugins.uglify()))
@@ -167,18 +167,30 @@ const useref = () => {
         .pipe(dest(config.build.dist))
 }
 
+// 整理 scss 和 js 文件
+const link = parallel(style, script)
+
 // 编译文件 因为 style, script, page 三个任务可以同时执行互不影响使用 parallel 方法组合任务
 const compile = parallel(style, script, page)
 
-// 开发时 先成为模块的编译，再开启服务器，使用 series 方法组合任务
-const develop = series(compile, serve)
+
 
 // 上线前 先删除临时和目标文件夹，编译文件后引用依赖，并将静态文件压缩后输入到目标文件夹
 const build = series(clean, parallel(extra, image, font, series(compile, useref))) 
 
+// 在生产模式下运行项目
+const start = series(build, start)
+
+// 开发时 先成为模块的编译，再开启服务器，使用 series 方法组合任务
+const deploy = series(compile, serve)
+
 
 module.exports = {
+    link,
     compile,
-    develop,
-    build
+    serve,
+    build,
+    start,
+    deploy,
+    clean
 }
