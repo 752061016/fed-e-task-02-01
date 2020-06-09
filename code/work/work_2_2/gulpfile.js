@@ -46,6 +46,16 @@ const clean = () => {
     return del([config.build.dist, config.build.temp])
 }
 
+const path = require('path')
+const Comb = require('csscomb')
+const standard = require('standard')
+const lint = done => {
+    const comb = new Comb(require('./csscomb.json'))
+    comb.processPath(config.build.src)
+    const cwd = path.join(__dirname, config.build.src)
+    standard.lintFiles(config.build.paths.scripts, { cwd, fix: true }, done)
+}
+
 // 使用gulp-sass插件样式编译sass文件 plugins.sass使用gulp-sass
 const style = () => {
     // src 创建文件写入流,接受文件路径,第二个配置为配置选项为对象，base：配置相同的路径,cwd：从哪个文件夹开始查找
@@ -167,6 +177,15 @@ const useref = () => {
         .pipe(dest(config.build.dist))
 }
 
+const upload = () => {
+    return src('**', { cwd: config.build.dist })
+        .pipe(plugins.plumber())
+        .pipe(plugins.ghPages({
+            cacheDir: `${config.temp}/.publish`,
+        }))
+}
+
+
 // 整理 scss 和 js 文件
 const link = parallel(style, script)
 
@@ -185,10 +204,12 @@ const deploy = series(compile, serve)
 
 module.exports = {
     link,
+    lint,
     compile,
     serve,
     build,
     start,
     deploy,
-    clean
+    clean,
+    upload
 }
