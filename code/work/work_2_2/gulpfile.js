@@ -173,13 +173,11 @@ const link = parallel(style, script)
 // 编译文件 因为 style, script, page 三个任务可以同时执行互不影响使用 parallel 方法组合任务
 const compile = parallel(style, script, page)
 
-
-
 // 上线前 先删除临时和目标文件夹，编译文件后引用依赖，并将静态文件压缩后输入到目标文件夹
 const build = series(clean, parallel(extra, image, font, series(compile, useref))) 
 
 // 在生产模式下运行项目
-const start = series(build, start)
+const start = series(build, serve)
 
 // 开发时 先成为模块的编译，再开启服务器，使用 series 方法组合任务
 const deploy = series(compile, serve)
