@@ -34,8 +34,9 @@ let config = {
 try {
     // 获取命令行路径下的pages.config.js文件
     const loadConfig = require(`${cwd}/pages.config.js`)
+    const deployConfig = require(`${cwd}/deploy.config.js`)
     // 合并默认配置为新的配置文件
-    config = Object.assign({}, config, loadConfig)
+    config = Object.assign({}, config, loadConfig, deployConfig)
     console.log(config)
 } catch (error) {
     console.log(error)
@@ -43,7 +44,7 @@ try {
 
 // 使用del插件清空文件: dist 放置的是编译后的文件，temp 放置的是编译时的临时文件
 const clean = () => {
-    return del([config.build.dist, config.build.temp])
+    return del([config.build.dist, config.build.temp,'.publish'])
 }
 
 const path = require('path')
@@ -178,13 +179,9 @@ const useref = () => {
 }
 
 const upload = () => {
-    return src('**', { cwd: config.build.dist })
-        .pipe(plugins.plumber())
-        .pipe(plugins.ghPages({
-            cacheDir: `${config.temp}/.publish`,
-        }))
+    return src('dist/**/*')
+        .pipe(plugins.ghPages())
 }
-
 
 // 整理 scss 和 js 文件
 const link = parallel(style, script)
@@ -199,7 +196,7 @@ const build = series(clean, parallel(extra, image, font, series(compile, useref)
 const start = series(build, serve)
 
 // 开发时 先成为模块的编译，再开启服务器，使用 series 方法组合任务
-const deploy = series(compile, serve)
+const deploy = series(build, upload)
 
 
 module.exports = {
