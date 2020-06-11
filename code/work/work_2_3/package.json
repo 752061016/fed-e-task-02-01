@@ -24,12 +24,11 @@
     "url": "https://zce.me"
   },
   "scripts": {
-    "clean": "gulp clean",
-    "lint": "gulp lint",
-    "serve": "gulp serve",
-    "build": "gulp build",
-    "start": "gulp start",
-    "deploy": "gulp deploy --production"
+    "clean": "grunt clean",
+    "serve": "grunt openServe",
+    "build": "grunt build",
+    "start": "grunt start",
+    "deploy": "grunt deploy --production"
   },
   "browserslist": [
     "last 1 version",
@@ -38,11 +37,33 @@
     "not dead"
   ],
   "dependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/preset-env": "^7.10.2",
     "bootstrap": "4.4.1",
+    "grunt": "^1.1.0",
+    "grunt-babel": "^8.0.0",
+    "grunt-contrib-clean": "^2.0.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-connect": "^2.1.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-cssmin": "^3.0.0",
+    "grunt-contrib-htmlmin": "^3.1.0",
+    "grunt-contrib-uglify": "^4.0.1",
+    "grunt-contrib-watch": "^1.1.0",
+    "grunt-gh-pages": "^4.0.0",
+    "grunt-pipe": "^1.0.0",
+    "grunt-sass": "^3.1.0",
     "jquery": "3.4.1",
-    "popper.js": "1.16.1"
+    "load-grunt-tasks": "^5.1.0",
+    "popper.js": "1.16.1",
+    "sass": "^1.26.8",
+    "serve-static": "^1.14.1",
+    "swig": "^1.4.2",
+    "useref": "^1.4.3"
   },
   "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "grunt-contrib-imagemin": "^4.0.0"
   },
   "engines": {
     "node": ">=6"

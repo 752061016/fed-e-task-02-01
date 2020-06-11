@@ -34,9 +34,8 @@ let config = {
 try {
     // 获取命令行路径下的pages.config.js文件
     const loadConfig = require(`${cwd}/pages.config.js`)
-    const deployConfig = require(`${cwd}/deploy.config.js`)
     // 合并默认配置为新的配置文件
-    config = Object.assign({}, config, loadConfig, deployConfig)
+    config = Object.assign({}, config, loadConfig)
     console.log(config)
 } catch (error) {
     console.log(error)
@@ -45,16 +44,6 @@ try {
 // 使用del插件清空文件: dist 放置的是编译后的文件，temp 放置的是编译时的临时文件
 const clean = () => {
     return del([config.build.dist, config.build.temp,'.publish'])
-}
-
-const path = require('path')
-const Comb = require('csscomb')
-const standard = require('standard')
-const lint = done => {
-    const comb = new Comb(require('./csscomb.json'))
-    comb.processPath(config.build.src)
-    const cwd = path.join(__dirname, config.build.src)
-    standard.lintFiles(config.build.paths.scripts, { cwd, fix: true }, done)
 }
 
 // 使用gulp-sass插件样式编译sass文件 plugins.sass使用gulp-sass
@@ -82,7 +71,7 @@ const script = () => {
 // 使用gulp-swig插件编辑html文件 plugins.swig使用gulp-swig
 const page = () => {
     // src 创建文件写入流,接受文件路径,第二个配置为配置选项为对象，base：配置相同的路径,cwd：从哪个文件夹开始查找
-    return src(`**/${config.build.paths.pages}`, {base: config.build.src, cwd: config.build.src})
+    return src(config.build.paths.pages, {base: config.build.src, cwd: config.build.src})
         // data 插入模板的配置选项,使用pages.config.js导出的data
         // cacha:false 防止模板引擎缓存机制导致页面不变化
         .pipe(plugins.swig({data:config.data, defaults:{cache:false}}))
@@ -112,7 +101,7 @@ const extra = () => {
         .pipe(dest(config.build.dist))
 }
 
-// 创建热更新服务
+// 创建临时服务器
 const serve = () => {
     // watch 方法接收两个参数 监听的路径和执行的命令
     // 监听styles、scripts、pages文件，若发生修改则直接执行对应的指令
@@ -161,7 +150,7 @@ const serve = () => {
 // 引用依赖,对html文件内的依赖进行处理压缩
 const useref = () => {
     // 对 temp 临时文件夹下的 html 进行压缩
-    return src(`**/${config.build.paths.pages}`, {base: config.build.temp ,cwd: config.build.temp})
+    return src(`${config.build.temp}/${config.build.paths.pages}`, {base: config.build.temp })
         .pipe(plugins.useref({searchPath: [config.build.temp, '.']}))
         // 压缩依赖中的 html css js 文件
         .pipe(plugins.if(/\.js$/, plugins.uglify()))
@@ -180,17 +169,21 @@ const useref = () => {
 
 const upload = () => {
     return src('dist/**/*')
-        .pipe(plugins.ghPages())
+        .pipe(plugins.ghPages({
+            branch: 'master'
+        }))
 }
 
-// 整理 scss 和 js 文件
-const link = parallel(style, script)
+
 
 // 编译文件 因为 style, script, page 三个任务可以同时执行互不影响使用 parallel 方法组合任务
 const compile = parallel(style, script, page)
 
+// 先编译文件再开启服务器
+const openServe = series(compile, serve)
+
 // 上线前 先删除临时和目标文件夹，编译文件后引用依赖，并将静态文件压缩后输入到目标文件夹
-const build = series(clean, parallel(extra, image, font, series(compile, useref))) 
+const build = series(clean, parallel(series(compile, useref), extra, image, font))
 
 // 在生产模式下运行项目
 const start = series(build, serve)
@@ -200,13 +193,10 @@ const deploy = series(build, upload)
 
 
 module.exports = {
-    link,
-    lint,
     compile,
-    serve,
+    openServe,
     build,
     start,
     deploy,
-    clean,
-    upload
+    clean
 }

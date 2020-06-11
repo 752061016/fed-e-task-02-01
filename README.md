@@ -17,7 +17,10 @@
 # 编程题
 ### 1.概述脚手架的实现过程，并使用NodeJS完成一个自定义的小型脚手架工具
 + 代码在 code/work/work_2_1 中
++ 视频在 01-cli-demo.mp4 中
 ### 2.尝试使用Gulp完成项目的自动化构建
 + 代码在 code/work/work_2_2 中
++ 视频在 02-gulp.mp4 中
 ### 3.使用Grunt完成项目的自动化构建
 + 代码在 code/work/work_2_3 中
++ 视频在 03-grunt.mp4 中
