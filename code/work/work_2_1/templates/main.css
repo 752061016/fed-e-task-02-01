@@ -1,0 +1,7 @@
+/* @username： <%= name %>
+@projectName: <%= projectName %> 
+@time: <%= time %>   */
+
+body{
+    background: #fff;
+}

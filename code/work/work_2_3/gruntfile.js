@@ -55,6 +55,20 @@ module.exports = grunt => {
                     ext: '.js'
                 }]
             }
+        },
+        html_template: {
+            options: {
+                data:0
+            },
+            build_html: {
+                options: {
+                    force: false
+                },
+                expand: true,
+                cwd: config.build.src,
+                src: config.build.paths.pages,
+                dest: 'temp'
+            }
         }
     })
 
